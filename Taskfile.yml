@@ -1,0 +1,48 @@
+version: '3'
+
+dotenv: ['.env']
+# method: checksum
+method: timestamp
+interval: '2s'
+
+tasks:
+  linter:
+    summary: |
+      1) opportunity AI
+    cmds:
+      - ./bin/staticcheck ./...
+    sources:
+      - ./**/*.go
+      - ./**/*.mod
+      - ./**/*.conf
+      - ./**/*.env
+      - ./**/*.json
+      - ./**/*.proto
+  build:
+    summary: |
+      2) Build opportunity AI
+    # deps: [linter]
+    cmds:
+      # - ./scripts/openapi.sh
+      - go build -o ./build/httpOppo ./cmd/http/*.go
+    sources:
+      - ./**/*.go
+      - ./**/*.mod
+      - ./**/*.conf
+      - ./**/*.env
+      - ./**/*.json
+      - ./**/*.proto
+  run:
+    summary: |
+      3) Run opportunity AI
+    deps: [build]
+    cmds:
+      - defer: rm -rf .task
+      - ./build/httpOppo
+    sources:
+      - ./**/*.go
+      - ./**/*.mod
+      - ./**/*.conf
+      - ./**/*.env
+      - ./**/*.json
+      - ./**/*.proto

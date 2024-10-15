@@ -1,0 +1,110 @@
+Title: System and Method for Enhanced Solicitation Contribution and Management Through Advanced Document Processing and User Interaction
+
+Background:
+
+The present invention relates to digital platforms for solicitation management, specifically systems that allow users to contribute, manage, and search solicitation documents with enhanced capabilities. Existing systems often lack the ability to efficiently process, search, and manage contributions in a dynamic and user-friendly manner, particularly when handling complex metadata and document relationships.
+
+Summary of the Invention:
+
+The invention introduces a comprehensive digital platform designed to streamline the process of solicitation contribution, management, and search functionality. The system incorporates a multi-faceted approach to document handling, metadata utilization, and user interaction, ensuring an efficient and effective management of solicitation documents. Key features include:
+
+Advanced search capabilities through full-text and metadata search, utilizing the pg_trgm extension in PostgreSQL for enhanced similarity search.
+A robust user system enabling signup, login, contribution, and the purchasing of contributions, with differentiated permissions and editing capabilities based on user roles and contribution status.
+A unique contribution process that integrates document upload to a dedicated file server ("bytebase"), document processing for data extraction, and metadata management for improved search and document relevance.
+
+Key Features
+User Registration and Management: Users can sign up, log in, and manage their profiles.
+Contribution Submission: Users can initiate and submit contributions, which include solicitation documents.
+Search Functionality: The platform provides advanced search capabilities, allowing users to find contributions based on various metadata fields such as title, description, and date.
+Document Management: Contributors can manage their submissions, with specific editing permissions based on the contribution's status and ownership.
+Adding Contributions
+The process of adding contributions is streamlined to ensure efficiency and accuracy:
+
+Initiation: A new contribution is created with a unique ID upon the user's request.
+Document Upload: Users upload documents to a file server ("bytebase"), receiving a link to the uploaded document which is then associated with the contribution.
+Document Submission: Users can submit multiple documents, each with a title and download link. The system processes RFP/RFQ documents specifically to extract pertinent data.
+Metadata Addition: Extracted data from RFP/RFQ documents aids users in filling out metadata fields more accurately and quickly, utilizing the system's search capabilities.
+Search Mechanism
+The platform employs PostgreSQL's pg_trgm extension and full-text search capabilities to facilitate efficient and accurate searches. Inputs are normalized and compared for similarity, combining full-text search with trigram similarity for effective ranking.
+
+Data Extraction from PDFs
+Data extraction involves the following steps:
+
+Initial Processing: The first two pages of RFP/RFQ documents are converted to text using the Poppler tool's PdfToText command.
+Content Preparation: Text content is sanitized and truncated if necessary to meet model limitations, using the bluemonday package.
+AI Processing: The processed text is sent to a GPT model with a system prompt designed to extract relevant data in a structured JSON format.
+The system prompt specifically requests details such as the document's title, issuing department/agency, NAICS code, and solicitation number, aiming to return this information in a predefined JSON structure.
+
+Error Handling and User Assistance
+The process is designed to be resilient, with error handling mechanisms ensuring that contributions can proceed even if data extraction encounters issues. Additionally, helper texts are provided under each form input to assist users in accurately completing the metadata fields, enhancing the platform's usability and data quality.
+
+This organized documentation provides a clear and comprehensive description of the platform's functionalities and processes, designed for patent profiling purposes. It highlights the innovative aspects of the system, including its unique approach to document management, data extraction, and search capabilities.
+
+Solicitation Provider: Platform Capabilities
+User Features
+Signup and Login: Users can create an account and log in to access the platform.
+Contribution: Users have the ability to submit solicitation documents to the platform for others to purchase.
+Search and Purchase: Users can search for and buy contributions made by others, accessing valuable solicitation documents.
+Contribution Management
+General Management: Users can view and manage their own contributions, including editing and updating document submissions.
+Pre-Approval Edits: Prior to administrative approval, the owner can add or remove documents from their contribution.
+Post-Approval Edits: Once a contribution has been approved by an administrator, the owner is limited to adding new documents only. If a document is added after approval and before purchase, the contribution status reverts to "unapproved," requiring administrator approval once more.
+Editing Restrictions: Once a contribution is purchased, the owner is no longer able to make edits.
+Administrative Requests: Both the owner and other users can request administrative edits to a contribution, ensuring flexibility and control over the submitted content.
+Administrative Privileges
+Full Editing Rights: Administrators have the capability to edit contributions in any manner, ensuring quality and compliance with platform standards.
+
+________________________________________________________________________________________________________
+
+Solicitation Provider:
+Abilites:
+    Signup
+    Login
+    Contribute
+    See (search) Contributions other did to Buy them
+    See (search) Their Contributions to edit and manage them
+        Admin can edit in any ways
+        Owner can edit (add and remove docs) before admin approves the contribute
+        Owner can edit (add docs only) after admin approves the contribute and if no one has bought yet it becomes unapproved for admin to approve again
+        Owner Cant edit after someone bought the contribute
+        Owner or anyone else can request admin to edit the contribute
+
+
+        Here is the system prompt:
+            systemPromt := "What is the title of this government solicitation document? " +
+		    "Also tell me the government department, agency, office, NAICS code, " +
+		    "contract vehicle, set aside, year this was issued, and solicitation " +
+		    "number and return each item if exist in json format. the format is " +
+		    "{'title': 'value', 'department': 'value', 'agency': 'value', " +
+		    "'office': 'value', 'naics': 'value', 'contract_vehicle': 'value', " +
+		    "'set_aside': 'value', 'year': 'value', 'solicitation_number': 'value'}"
+
+        Here is the request payload:
+            requestPayload := ChatCompletionRequest{
+		    // Model: "gpt-3.5-turbo-16k-0613",
+		    Model: "gpt-4",
+		    Messages: []Message{
+		    	{
+		    		Role:    "system",
+		    		Content: content,
+		    	},
+		    	{
+		    		Role:    "user",
+		    		Content: text,
+		    	},
+		    },
+		    Temperature: 0.7,
+		    TopP:        1.0,
+	    }
+
+        Here is the similar search code
+            normalizedInput := strings.ToLower(params.Filters.SimilarName.Value)
+		    // remove specia chars
+		    rgx := regexp.MustCompile("[^a-zA-Z0-9]+")
+		    normalizedInput = rgx.ReplaceAllString(normalizedInput, " ")
+
+		    // Prepare the full-text search vector and query. Adjust the configuration ('english') as needed.
+		    tsQuery := fmt.Sprintf("plainto_tsquery('english', LOWER('%s'))", normalizedInput)
+		    // Combine full-text search with trigram similarity for ranking
+		    where = append(where, fmt.Sprintf("(ts_rank_cd(to_tsvector('english', LOWER(name)), %s) + similarity(LOWER(name), LOWER('%s'))) / 2 > 0.2", tsQuery, normalizedInput))
+		    // This assumes an additive model for ranking combining both scores, adjust the threshold and weights as needed.

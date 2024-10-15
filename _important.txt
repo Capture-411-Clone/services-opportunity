@@ -1,0 +1,5 @@
+Change the jwt package and middleware to make it safe
+User response data should not have sensitive data
+User Join Data should not contain sensitive data
+
+File path downloads should be invisible for non-purchased documents
