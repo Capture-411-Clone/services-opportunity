@@ -308,8 +308,8 @@ func makeFilters(params OpportunityQueryRequestParams) []string {
 func (s *service) Query(
 	ctx context.Context, offset, limit int, params OpportunityQueryRequestParams,
 ) ([]models.Opportunity, response.ErrorResponse) {
-	// we do not exclude bought orders from buy list referring to app store page buying apps and purchased ones are in the list
 
+	// we do not exclude bought orders from buy list referring to app store page buying apps and purchased ones are in the list
 	Id := policy.ExtractIdClaim(ctx)
 	userID, _ := strconv.Atoi(Id)
 
@@ -371,5 +371,22 @@ func (s *service) Query(
 		return []models.Opportunity{}, response.GormErrorResponse(err, "error in finding opportunities")
 	}
 
-	return opportunities, response.ErrorResponse{}
+	op := []models.Opportunity{}
+
+	if params.Filters.Requested.Value == "false" {
+		for _, v := range opportunities {
+			if len(v.Documents) > 0 {
+				op = append(op, v)
+			}
+		}
+	} else {
+		for _, v := range opportunities {
+			if len(v.Documents) <= 0 {
+				op = append(op, v)
+			}
+
+		}
+	}
+
+	return op, response.ErrorResponse{}
 }
