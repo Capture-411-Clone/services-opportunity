@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -204,6 +205,8 @@ func (s *service) Update(ctx context.Context, id string, input UpdateOpportunity
 			}
 		}
 
+		fmt.Println("Requested:", opportunity.Requested)
+
 		err = tx.Commit().Error
 		if err != nil {
 			tx.Rollback()
@@ -363,7 +366,7 @@ func (s *service) Update(ctx context.Context, id string, input UpdateOpportunity
 	}
 
 	if len(opportunity.Documents) > 0 && opportunity.SolicitationNumber != "" {
-		err = tx.Model(&opportunity).Update("requested", false).Error
+		err = tx.Model(&opportunity).Update("requested", input.Requested).Error
 		if err != nil {
 			tx.Rollback()
 			s.logger.With(ctx).Error(err)
