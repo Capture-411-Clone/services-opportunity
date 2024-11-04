@@ -231,7 +231,7 @@ func makeFilters(params OpportunityQueryRequestParams) []string {
 	if params.Filters.Requested.Op != "" {
 		opValue := filter.GetDBOperatorAndValue(params.Filters.Requested.Op, params.Filters.Requested.Value)
 		// Assuming the value is 'true', 'false', or could be numeric '1', '0'
-		boolValue := strings.ToLower(opValue.Value) == "true" || opValue.Value == "1"
+		boolValue := params.Filters.Requested.Value == "true"
 		// Format the condition without quotes, using TRUE or FALSE directly
 		where = append(where, fmt.Sprintf("requested %s %t", opValue.Operator, boolValue))
 	}
