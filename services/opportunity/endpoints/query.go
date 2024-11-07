@@ -231,7 +231,10 @@ func makeFilters(params OpportunityQueryRequestParams) []string {
 	if params.Filters.Requested.Op != "" {
 		opValue := filter.GetDBOperatorAndValue(params.Filters.Requested.Op, params.Filters.Requested.Value)
 		// Assuming the value is 'true', 'false', or could be numeric '1', '0'
-		boolValue := params.Filters.Requested.Value == "true"
+		boolValue := strings.ToLower(opValue.Value) == "true" || opValue.Value == "1"
+		if params.Filters.Requested.Value == "true" {
+			boolValue = true
+		}
 		// Format the condition without quotes, using TRUE or FALSE directly
 		where = append(where, fmt.Sprintf("requested %s %t", opValue.Operator, boolValue))
 	}
@@ -327,7 +330,9 @@ func (s *service) Query(
 
 	var opportunities []models.Opportunity
 
-	tx := s.db.WithContext(ctx).Offset(offset).Limit(limit).
+	tx := s.db.WithContext(ctx).
+		Offset(offset).
+		Limit(limit).
 		Order(fmt.Sprintf("%s %s", params.OrderBy, params.Order)).
 		Preload("User").
 		Preload("Staff").
@@ -371,22 +376,5 @@ func (s *service) Query(
 		return []models.Opportunity{}, response.GormErrorResponse(err, "error in finding opportunities")
 	}
 
-	op := []models.Opportunity{}
-
-	if params.Filters.Requested.Value == "false" {
-		for _, v := range opportunities {
-			if len(v.Documents) > 0 {
-				op = append(op, v)
-			}
-		}
-	} else {
-		for _, v := range opportunities {
-			if len(v.Documents) <= 0 {
-				op = append(op, v)
-			}
-
-		}
-	}
-
-	return op, response.ErrorResponse{}
+	return opportunities, response.ErrorResponse{}
 }
