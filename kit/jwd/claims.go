@@ -9,18 +9,20 @@ import (
 )
 
 func Claims(ctx context.Context) (jwt.MapClaims, error) {
-	// Retrieve the token from the context
 	token, ok := ctx.Value(UserContextKey).(*jwt.Token)
 	if !ok || token == nil {
-		// No token found, return nil claims without error
 		log.Println("No valid JWT token found in context (Claims method)")
-		return nil, nil
+		return jwt.MapClaims{"Roles": []interface{}{}}, nil // Return empty roles instead of nil
 	}
 
-	// Attempt to convert claims to jwt.MapClaims
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, errors.New("conversion to jwt.MapClaims failed for your token in context (Claims method)")
+	}
+
+	// Ensure Roles exists and is initialized
+	if claims["Roles"] == nil {
+		claims["Roles"] = []interface{}{}
 	}
 
 	return claims, nil

@@ -1,8 +1,9 @@
 package jwd
 
 import (
-	"github.com/dgrijalva/jwt-go"
 	"strconv"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type CustomClaims struct {
