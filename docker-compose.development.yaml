@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  dev_capture411_opportunity_service:
+    container_name: dev_capture411_opportunity_service
+    # image: registry.gitag.ir/dev_capture411_opportunity_service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://dev_capture411_opportunity_service:${INTERNAL_PORT}/healthcheck" ]
+      interval: 60s
+      timeout: 90s
+      retries: 2
+    env_file: .env.development
+    environment:
+      - ENVIROMENT=development
+    volumes:
+      - ./certs/global-bundle.pem:/app/certs/global-bundle.pem
+    expose:
+      - ${EXTERNAL_PORT}
+      - ${INTERNAL_PORT}
+    ports:
+      - ${EXTERNAL_PORT}:${INTERNAL_PORT}
+    # depends_on:
+    #   - dev_capture411_opportunity_postgres
+    networks:
+      - capture411Bridge
+    restart: unless-stopped
+
+volumes:
+  dev_capture411_opportunity_postgres_data:
+
+networks:
+  capture411Bridge:
+    external: true
